@@ -11,6 +11,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 	ini_set('session.use_only_cookies', '1');
 	ini_set('session.use_strict_mode', '1');
 	session_name('lifeins_session');
+	session_save_path(__DIR__ . '/sessions');
 	session_set_cookie_params([
 		'lifetime' => 0,
 		'path' => '/',

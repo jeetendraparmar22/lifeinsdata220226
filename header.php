@@ -20,26 +20,6 @@ $id = $_SESSION['id'] ?? null;
 $curempname = $_SESSION['empname'] ?? null;
 $adminusername = $_SESSION['adminusername'] ?? null;
 
-// Session timeout check — must run after DB is ready so we can reset the flag
-$timeout = 1200;
-if (isset($_SESSION['timeout'])) {
-  $duration = time() - (int)$_SESSION['timeout'];
-  if ($duration > $timeout) {
-    if (!empty($id) && !empty($utype)) {
-      $flagId = (int)$id;
-      if ($utype === 'employee') {
-        $conn->query("UPDATE `employeedetail` SET flag = '1' WHERE id = $flagId");
-      } elseif ($utype === 'subadmin') {
-        $conn->query("UPDATE `subadmin` SET flag = '1' WHERE id = $flagId");
-      }
-    }
-    session_destroy();
-    header("location:index.php");
-    exit;
-  }
-}
-$_SESSION['timeout'] = time();
-
 // Handle updates based on user type
 class UserFlagHandler
 {
