@@ -6,35 +6,28 @@ include_once('config.php');
 
 echo "<h2>Database Session Test</h2>";
 echo "<p>Session ID: " . session_id() . "</p>";
+echo "<p>Session Status: " . (session_status() === PHP_SESSION_ACTIVE ? 'ACTIVE' : 'INACTIVE') . "</p>";
 
 if (!isset($_SESSION['test'])) {
     $_SESSION['test'] = 'Hello ' . time();
-    $_SESSION['admin'] = 'admin_user';
-    $_SESSION['time'] = time();
+    $_SESSION['adminusername'] = 'admin_user';
+    $_SESSION['id'] = 123;
+    $_SESSION['utype'] = 'subadmin';
     echo "<p style='color:green'>Session data SET</p>";
-    echo "<pre>" . print_r($_SESSION, true) . "</pre>";
-    echo "<p><a href='test_db_session.php'>Refresh to test persistence</a></p>";
 } else {
     echo "<p style='color:green'>Session PERSISTED!</p>";
-    echo "<pre>" . print_r($_SESSION, true) . "</pre>";
-    echo "<p>Age: " . (time() - $_SESSION['time']) . " seconds</p>";
 }
 
-// Check database table
-$db = new Database();
-$conn = $db->getConnection();
-$result = $conn->query("SELECT * FROM php_sessions WHERE id = '" . session_id() . "'");
-if ($result && $row = $result->fetch_assoc()) {
-    echo "<h3>Database Record Found:</h3>";
-    echo "<p>ID: " . $row['id'] . "</p>";
-    echo "<p>Data length: " . strlen($row['data']) . " bytes</p>";
-    echo "<p>Updated: " . $row['updated_at'] . "</p>";
-    if (strlen($row['data']) > 0) {
-        echo "<p style='color:green'>SUCCESS: Session data is in database!</p>";
-    } else {
-        echo "<p style='color:red'>WARNING: Data is empty in database!</p>";
-    }
+echo "<p>Session Data:</p>";
+echo "<pre>" . print_r($_SESSION, true) . "</pre>";
+
+echo "<p><a href='test_db_session.php'>Click to refresh</a></p>";
+
+echo "<hr><h3>Login Test:</h3>";
+if (isset($_SESSION['adminusername']) && isset($_SESSION['id'])) {
+    echo "<p style='color:green'>Logged in user: " . $_SESSION['adminusername'] . " (ID: " . $_SESSION['id'] . ")</p>";
+    echo "<p><a href='logout.php'>Test Logout</a></p>";
 } else {
-    echo "<p style='color:red'>No database record found for this session!</p>";
+    echo "<p>Not logged in yet.</p>";
 }
 ?>

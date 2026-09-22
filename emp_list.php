@@ -7,7 +7,7 @@
 error_reporting(0);
 
 // Include shared security helper
-include_once('classes/securityHelper.php');
+// include_once('classes/securityHelper.php');
 
 class SubadminHandler
 {

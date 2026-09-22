@@ -79,12 +79,15 @@ class Login
             $currentDate >= $data['active_date'] &&
             $currentDate <= $data['deactive_date']
         ) {
-            session_regenerate_id(true);
+            // Set session data BEFORE regenerating ID
             $_SESSION['utype'] = $data['utype'];
             $_SESSION['adminusername'] = $data['adminusername'];
             $_SESSION['id'] = $data['id'];
             $_SESSION['timezone'] = $timezone;
             $_SESSION['timeout'] = time();
+
+            // Now regenerate ID (preserves session data)
+            session_regenerate_id(true);
 
             $this->redirectBasedOnDate('subadmin', $data['id'], 'add_newemp.php', 'emp_list.php');
         } else {
@@ -124,12 +127,15 @@ class Login
             $currentDate >= $data['active_date'] &&
             $currentDate <= $data['deactive_date']
         ) {
-            session_regenerate_id(true);
+            // Set session data BEFORE regenerating ID
             $_SESSION['utype'] = $data['utype'];
             $_SESSION['empname'] = $data['empname'];
             $_SESSION['id'] = $data['id'];
             $_SESSION['timezone'] = $timezone;
             $_SESSION['timeout'] = time();
+
+            // Now regenerate ID (preserves session data)
+            session_regenerate_id(true);
 
             $this->redirectBasedOnDate('employeedetail', $data['id'], 'add_entry.php', 'entrylist.php');
         } else {
