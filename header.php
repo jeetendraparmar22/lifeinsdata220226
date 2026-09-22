@@ -6,16 +6,6 @@ ini_set('display_startup_errors', 0);
 error_reporting(0);
 
 
-// Check HTTP referer for security
-if (!isset($_SERVER['HTTP_REFERER'])) {
-  header('location:../error.php');
-  exit;
-}
-
-
-
-// session_start();
-
 // Include config first so session is started and timezone is set before anything else
 include_once(__DIR__ . '/config.php');
 

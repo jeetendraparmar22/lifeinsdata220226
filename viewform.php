@@ -11,7 +11,6 @@ if (!isset($_SERVER['HTTP_REFERER'])) {
     header('location:../error.php');
     exit;
 }
-include_once("session_timeout.php");
 ?>
 
 <link rel="stylesheet" href="css/fulldetail.css" />
@@ -53,27 +52,27 @@ include_once("session_timeout.php");
     // Sanitize and validate ID to prevent SQL injection and ModSecurity issues
     $id = SecurityHelper::sanitizeId($_GET['id'] ?? null);
     if (!$id) {
-      die("Invalid form ID");
+        die("Invalid form ID");
     }
-    
+
     // Use prepared statement for security
     $stmt = $conn->prepare("SELECT * FROM forms WHERE id=?");
     if ($stmt) {
-      $stmt->bind_param("i", $id);
-      $stmt->execute();
-      $result = $stmt->get_result();
-      $row = $result->fetch_assoc();
-      $stmt->close();
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
     } else {
-      die("Database error");
+        die("Database error");
     }
-   
+
     ?>
 
     <?php
 
     include_once('header.php');
- 
+
     ?>
     <!-- partial -->
     <div class="container-fluid page-body-wrapper">
