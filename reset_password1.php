@@ -1,22 +1,22 @@
 <?php
 error_reporting(0);
 
+// Include config FIRST for session
+include_once('config.php');
+
 if (!isset($_SERVER['HTTP_REFERER'])) {
   // redirect them to your desired location
   header('location:../error.php');
   exit;
 }
 
-// session_start();
 $utype = $_SESSION['utype'];
 $id = $_SESSION['id'];
+$empname = $_SESSION['empname'];
 
-include_once('config.php');
 include_once('classes/securityHelper.php');
 $db = new Database();
 $conn = $db->getConnection();
-
-$empname = $_SESSION['empname'];
 if (count($_POST) > 0) {
   // Sanitize session ID
   $session_id = SecurityHelper::sanitizeId($_SESSION['id'] ?? null);

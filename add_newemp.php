@@ -14,20 +14,20 @@ if (!isset($_SERVER['HTTP_REFERER'])) {
   exit;
 }
 
-$utype = $_SESSION['utype'];
-$id = $_SESSION['id'];
+$utype = $_SESSION['utype'] ?? '';
+$id = $_SESSION['id'] ?? 0;
 
-$subadmin = $_SESSION['adminusername'];
-$select = "SELECT *FROM `employeedetail` WHERE subadmin='$subadmin'";
+$subadmin = $_SESSION['adminusername'] ?? '';
+$select = "SELECT *FROM `employeedetail` WHERE subadmin='" . $conn->real_escape_string($subadmin) . "'";
 $result = mysqli_query($conn, $select);
 $count = mysqli_num_rows($result);
-$select1 = mysqli_query($conn, "SELECT *FROM subadmin WHERE adminusername='$subadmin'");
+$select1 = mysqli_query($conn, "SELECT *FROM subadmin WHERE adminusername='" . $conn->real_escape_string($subadmin) . "'");
 $row = mysqli_fetch_array($select1);
 
-$active_date_time = $row['active_date'];
-$to_date = date('Y-m-d', strtotime($active_date_time));
+$active_date_time = $row['active_date'] ?? null;
+$to_date = !empty($active_date_time) ? date('Y-m-d', strtotime($active_date_time)) : date('Y-m-d');
 
-$nou = $row['no_of_user'];
+$nou = $row['no_of_user'] ?? 0;
 
 if (isset($_POST['insert'])) {
   // $empn ame = $_POST['empname'];
@@ -113,15 +113,15 @@ if (isset($_GET['id'])) {
 }
 //include_once("adminheader.php"); 
 
-$subadmin = $_SESSION['adminusername'];
+$subadmin = $_SESSION['adminusername'] ?? '';
 
-$selectdate = mysqli_query($conn, "SELECT *FROM subadmin WHERE adminusername='$subadmin'");
+$selectdate = mysqli_query($conn, "SELECT *FROM subadmin WHERE adminusername='" . $conn->real_escape_string($subadmin) . "'");
 $row1 = mysqli_fetch_array($selectdate);
-$date = $row1['login_date'];
-$d = date_parse_from_format("Y-m-d", $date);
-$day = $d["day"];
-$year = $d["year"];
-$month = $d["month"];
+$date = $row1['login_date'] ?? '';
+$d = !empty($date) ? date_parse_from_format("Y-m-d", $date) : [];
+$day = $d["day"] ?? date('d');
+$year = $d["year"] ?? date('Y');
+$month = $d["month"] ?? date('m');
 $month1 = $month - 1;
 ?>
 

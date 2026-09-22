@@ -90,6 +90,7 @@ class Login
 
             // Now regenerate ID (preserves session data)
             session_regenerate_id(true);
+            session_write_close(); // Ensure session is written to database
 
             $this->redirectBasedOnDate('subadmin', $data['id'], 'add_newemp.php', 'emp_list.php');
         } else {
@@ -138,6 +139,7 @@ class Login
 
             // Now regenerate ID (preserves session data)
             session_regenerate_id(true);
+            session_write_close(); // Ensure session is written to database
 
             $this->redirectBasedOnDate('employeedetail', $data['id'], 'add_entry.php', 'entrylist.php');
         } else {

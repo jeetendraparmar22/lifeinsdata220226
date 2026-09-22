@@ -1,13 +1,9 @@
 <?php
-
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
-// session_start();
 error_reporting(0);
 
-// Include shared security helper
-// include_once('classes/securityHelper.php');
+// Include config FIRST for session handling
+include_once('config.php');
+include_once('classes/securityHelper.php');
 
 class SubadminHandler
 {
@@ -36,12 +32,20 @@ class SubadminHandler
 
   public function parseLoginDate($date)
   {
+    if (empty($date)) {
+      return [
+        "day" => date('d'),
+        "year" => date('Y'),
+        "month" => date('m'),
+        "previousMonth" => date('m') - 1,
+      ];
+    }
     $parsedDate = date_parse_from_format("Y-m-d", $date);
     return [
-      "day" => $parsedDate["day"],
-      "year" => $parsedDate["year"],
-      "month" => $parsedDate["month"],
-      "previousMonth" => $parsedDate["month"] - 1,
+      "day" => $parsedDate["day"] ?? date('d'),
+      "year" => $parsedDate["year"] ?? date('Y'),
+      "month" => $parsedDate["month"] ?? date('m'),
+      "previousMonth" => ($parsedDate["month"] ?? date('m')) - 1,
     ];
   }
 }
@@ -88,18 +92,7 @@ if ($subadmin) {
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-<!-- <script>
-  $(function() {
-    var date = new Date();
-    var currentMonth = "<?php echo $month1 ?>";
-    var currentDate = "<?php echo $day ?>";
-    var currentYear = "<?php echo $year ?>";
-    $("#datepicker").datepicker({
-      minDate: 0,
-      maxDate: new Date(currentYear, currentMonth, currentDate)
-    });
-  });
-</script> -->
+
 
 <?php
 include_once('header.php');

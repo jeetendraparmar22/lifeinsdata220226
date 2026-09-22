@@ -2,11 +2,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Clear output buffering
-while (ob_get_level()) {
-    ob_end_clean();
-}
-
 // Database configuration
 $dbHost = "208.91.198.160";
 $dbUser = "nextt3ac_lifeins";
@@ -20,28 +15,41 @@ if ($sessionDb->connect_error) {
 }
 $sessionDb->set_charset('utf8mb4');
 
-// Create sessions table
+// Create sessions table if not exists
 $sessionDb->query("CREATE TABLE IF NOT EXISTS `php_sessions` (
     `id` varchar(128) NOT NULL PRIMARY KEY,
     `data` text NOT NULL,
     `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// Add missing columns if they don't exist (for existing tables)
+$columns = $sessionDb->query("SHOW COLUMNS FROM `php_sessions` LIKE 'ip_address'");
+if ($columns->num_rows == 0) {
+    $sessionDb->query("ALTER TABLE `php_sessions` ADD COLUMN `ip_address` varchar(45) DEFAULT NULL AFTER `updated_at`");
+}
+$columns = $sessionDb->query("SHOW COLUMNS FROM `php_sessions` LIKE 'user_agent'");
+if ($columns->num_rows == 0) {
+    $sessionDb->query("ALTER TABLE `php_sessions` ADD COLUMN `user_agent` varchar(255) DEFAULT NULL AFTER `ip_address`");
+}
+
 // Session handler class
 class DatabaseSessionHandler {
     private $db;
     private $sessionId;
     private $sessionData;
+    private $isActive = false;
 
     public function __construct($db) {
         $this->db = $db;
     }
 
     public function open($savePath, $sessionName) {
+        $this->isActive = true;
         return true;
     }
 
     public function close() {
+        $this->isActive = false;
         return true;
     }
 
@@ -50,6 +58,7 @@ class DatabaseSessionHandler {
         $result = $this->db->query("SELECT `data` FROM `php_sessions` WHERE `id` = '$id'");
         if ($result && $row = $result->fetch_assoc()) {
             $this->sessionId = $id;
+            $this->sessionData = $row['data'];
             return $row['data'];
         }
         return '';
@@ -58,7 +67,12 @@ class DatabaseSessionHandler {
     public function write($id, $data) {
         $id = $this->db->real_escape_string($id);
         $data = $this->db->real_escape_string($data);
-        $this->db->query("REPLACE INTO `php_sessions` (`id`, `data`, `updated_at`) VALUES ('$id', '$data', NOW())");
+        $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $this->db->real_escape_string($_SERVER['REMOTE_ADDR']) : '';
+        $userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $this->db->real_escape_string($_SERVER['HTTP_USER_AGENT']) : '';
+
+        $this->db->query("INSERT INTO `php_sessions` (`id`, `data`, `updated_at`, `ip_address`, `user_agent`)
+                          VALUES ('$id', '$data', NOW(), '$ipAddress', '$userAgent')
+                          ON DUPLICATE KEY UPDATE `data` = '$data', `updated_at` = NOW(), `ip_address` = '$ipAddress', `user_agent` = '$userAgent'");
         return true;
     }
 
@@ -79,41 +93,36 @@ $sessionHandler = new DatabaseSessionHandler($sessionDb);
 
 // Register handlers
 session_set_save_handler(
-    array($sessionHandler, 'open'),
-    array($sessionHandler, 'close'),
-    array($sessionHandler, 'read'),
-    array($sessionHandler, 'write'),
-    array($sessionHandler, 'destroy'),
-    array($sessionHandler, 'gc')
+    [$sessionHandler, 'open'],
+    [$sessionHandler, 'close'],
+    [$sessionHandler, 'read'],
+    [$sessionHandler, 'write'],
+    [$sessionHandler, 'destroy'],
+    [$sessionHandler, 'gc']
 );
 
-// Configure session - detect HTTPS properly for production (load balancers, proxies)
+// Configure session cookie
 $isHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
     || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
-    || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) !== 'off')
     || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
 
-// Get the domain for cookie (use explicit domain or none for current host)
-$cookieDomain = !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
-
-// Force secure in production if HTTPS is detected
-$forceSecure = $isHttps;
-
-ini_set('session.use_only_cookies', '1');
-ini_set('session.use_strict_mode', '1');
-session_name('lifeins_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'domain' => $cookieDomain,
-    'secure' => $forceSecure,
+    'domain' => '',
+    'secure' => $isHttps,
     'httponly' => true,
     'samesite' => 'Lax'
 ]);
 
+ini_set('session.use_only_cookies', '1');
+ini_set('session.use_strict_mode', '1');
+session_name('lifeins_session');
+
 // Start session
 session_start();
 
+// Database class
 class Database {
     private $serverName = "208.91.198.160";
     private $userName = "nextt3ac_lifeins";
@@ -145,4 +154,4 @@ class Database {
 }
 
 $defaultTimezone = 'Asia/Kolkata';
-date_default_timezone_set($_SESSION['timezone'] ?? $defaultTimezone);
+date_default_timezone_set($defaultTimezone);

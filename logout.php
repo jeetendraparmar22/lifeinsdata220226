@@ -2,33 +2,28 @@
 error_reporting(0);
 ob_start();
 
-include_once(‘config.php’);
+include_once('config.php');
 
-if (isset($_SESSION[‘id’]) && !empty($_SESSION[‘id’])) {
-    $id = $_SESSION[‘id’];
-    $flagupdate = "UPDATE `employeedetail` SET flag = ‘1’ WHERE id = $id";
+if (isset($_SESSION['id']) && !empty($_SESSION['id'])) {
+    $id = (int)$_SESSION['id'];
+    $db = new Database();
+    $conn = $db->getConnection();
+
+    $flagupdate = "UPDATE `employeedetail` SET flag = '1' WHERE id = $id";
     $sql = mysqli_query($conn, $flagupdate);
 
-    if ($sql) {
-        $_SESSION[‘utype’] = "";
-        session_destroy();
+    session_unset();
+    session_destroy();
 
-        echo ‘<script>
-        alert("You’ve successfully logged out");
-        window.location.href = "index.php";
-        </script>’;
-        exit;
-    } else {
-        echo ‘<script>
-        alert("Error updating record. Please try again.");
-        window.location.href = "index.php";
-        </script>’;
-        exit;
-    }
+    echo '<script>
+    alert("You have successfully logged out");
+    window.location.href = "index.php";
+    </script>';
+    exit;
 } else {
-    echo ‘<script>
+    echo '<script>
     alert("Session expired. Redirecting to login page.");
     window.location.href = "index.php";
-    </script>’;
+    </script>';
     exit;
 }
