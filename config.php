@@ -91,7 +91,7 @@ class DatabaseSessionHandler {
 // Create handler instance
 $sessionHandler = new DatabaseSessionHandler($sessionDb);
 
-// Register handlers
+// Register handlers - tells PHP to use database instead of files
 session_set_save_handler(
     [$sessionHandler, 'open'],
     [$sessionHandler, 'close'],
@@ -101,7 +101,7 @@ session_set_save_handler(
     [$sessionHandler, 'gc']
 );
 
-// Configure session cookie
+// Configure session cookie for security
 $isHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
     || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
     || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
@@ -114,10 +114,6 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax'
 ]);
-
-ini_set('session.use_only_cookies', '1');
-ini_set('session.use_strict_mode', '1');
-session_name('lifeins_session');
 
 // Start session
 session_start();

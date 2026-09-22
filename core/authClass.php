@@ -176,8 +176,10 @@ class Login
 $database = new Database();
 $login = new Login($database);
 
-// Handle logout
-$login->logout();
+// Handle logout - only when explicitly requested
+if (isset($_GET['logout']) || (isset($_POST['logout']) && $_POST['logout'] == 'true')) {
+    $login->logout();
+}
 
 // Handle login submission
 if (isset($_POST['login'])) {
