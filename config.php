@@ -1,109 +1,89 @@
 <?php
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Clear any output buffering
+// Clear output buffering
 while (ob_get_level()) {
     ob_end_clean();
 }
 
-// Database session configuration
+// Database configuration
 $dbHost = "208.91.198.160";
 $dbUser = "nextt3ac_lifeins";
 $dbPass = "o)K#4[(kokL^";
 $dbName = "nextt3ac_lifeins";
 
-// Create database connection for session handler
+// Create database connection
 $sessionDb = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 if ($sessionDb->connect_error) {
-    die("Session database connection failed.");
+    die("Session DB connection failed: " . $sessionDb->connect_error);
 }
 $sessionDb->set_charset('utf8mb4');
 
 // Create sessions table if not exists
-$sessionDb->query("CREATE TABLE IF NOT EXISTS `sessions` (
-    `session_id` varchar(128) NOT NULL PRIMARY KEY,
-    `session_data` text NOT NULL,
-    `last_activity` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX `idx_last_activity` (`last_activity`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+$sessionDb->query("CREATE TABLE IF NOT EXISTS `php_sessions` (
+    `id` varchar(128) NOT NULL PRIMARY KEY,
+    `data` text NOT NULL,
+    `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-// Custom session open
-function sess_open($savePath, $sessionName) {
+// Register shutdown function to close session DB connection
+register_shutdown_function(function() use ($sessionDb) {
+    $sessionDb->close();
+});
+
+// Custom session handlers
+function custom_sess_open($save_path, $session_name) {
     return true;
 }
 
-// Custom session close
-function sess_close() {
+function custom_sess_close() {
     return true;
 }
 
-// Custom session read
-function sess_read($sessionId) {
+function custom_sess_read($id) {
     global $sessionDb;
-
-    $stmt = $sessionDb->prepare("SELECT session_data FROM sessions WHERE session_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("s", $sessionId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            $stmt->close();
-            return $row['session_data'];
-        }
-        $stmt->close();
+    $result = $sessionDb->query("SELECT `data` FROM `php_sessions` WHERE `id` = '" . $sessionDb->real_escape_string($id) . "'");
+    if ($result && $row = $result->fetch_assoc()) {
+        return $row['data'];
     }
     return '';
 }
 
-// Custom session write
-function sess_write($sessionId, $sessionData) {
+function custom_sess_write($id, $data) {
     global $sessionDb;
-
-    $stmt = $sessionDb->prepare("REPLACE INTO sessions (session_id, session_data, last_activity) VALUES (?, ?, NOW())");
-    if ($stmt) {
-        $stmt->bind_param("ss", $sessionId, $sessionData);
-        $stmt->execute();
-        $stmt->close();
-        return true;
-    }
-    return false;
-}
-
-// Custom session destroy
-function sess_destroy($sessionId) {
-    global $sessionDb;
-
-    $stmt = $sessionDb->prepare("DELETE FROM sessions WHERE session_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("s", $sessionId);
-        $stmt->execute();
-        $stmt->close();
-        return true;
-    }
-    return false;
-}
-
-// Custom session garbage collector
-function sess_gc($maxlifetime) {
-    global $sessionDb;
-
-    $sessionDb->query("DELETE FROM sessions WHERE last_activity < NOW() - INTERVAL " . (int)$maxlifetime . " SECOND");
+    $id = $sessionDb->real_escape_string($id);
+    $data = $sessionDb->real_escape_string($data);
+    $sessionDb->query("REPLACE INTO `php_sessions` (`id`, `data`, `updated_at`) VALUES ('$id', '$data', NOW())");
     return true;
 }
 
-// Register custom session handlers BEFORE session_start()
+function custom_sess_destroy($id) {
+    global $sessionDb;
+    $id = $sessionDb->real_escape_string($id);
+    $sessionDb->query("DELETE FROM `php_sessions` WHERE `id` = '$id'");
+    return true;
+}
+
+function custom_sess_gc($maxlifetime) {
+    global $sessionDb;
+    $sessionDb->query("DELETE FROM `php_sessions` WHERE `updated_at` < DATE_SUB(NOW(), INTERVAL " . (int)$maxlifetime . " SECOND)");
+    return true;
+}
+
+// Register handlers
 session_set_save_handler(
-    'sess_open',
-    'sess_close',
-    'sess_read',
-    'sess_write',
-    'sess_destroy',
-    'sess_gc'
+    'custom_sess_open',
+    'custom_sess_close',
+    'custom_sess_read',
+    'custom_sess_write',
+    'custom_sess_destroy',
+    'custom_sess_gc'
 );
 
-// Start session with secure settings
-$isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
-    || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+// Configure session
+$isHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+    || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 
 ini_set('session.use_only_cookies', '1');
 ini_set('session.use_strict_mode', '1');
@@ -116,27 +96,21 @@ session_set_cookie_params([
     'samesite' => 'Lax'
 ]);
 
+// Start session
 session_start();
 
-// Close the session database connection after session is loaded
-$sessionDb->close();
-
-class Database
-{
+class Database {
     private $serverName = "208.91.198.160";
     private $userName = "nextt3ac_lifeins";
     private $password = "o)K#4[(kokL^";
     private $dbName = "nextt3ac_lifeins";
-
     private $connection;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->connect();
     }
 
-    public function connect()
-    {
+    public function connect() {
         $this->connection = new mysqli($this->serverName, $this->userName, $this->password, $this->dbName);
         if ($this->connection->connect_error) {
             die("Database connection failed.");
@@ -144,13 +118,11 @@ class Database
         $this->connection->set_charset('utf8mb4');
     }
 
-    public function getConnection()
-    {
+    public function getConnection() {
         return $this->connection;
     }
 
-    public function closeConnection()
-    {
+    public function closeConnection() {
         if ($this->connection) {
             $this->connection->close();
         }
