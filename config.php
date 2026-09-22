@@ -5,6 +5,11 @@
 
 error_reporting(0);
 
+// Clear any output buffering that could prevent session writes
+if (ob_get_level()) {
+	ob_end_clean();
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
 	$isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
 		|| strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
@@ -20,6 +25,8 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 		'samesite' => 'Lax'
 	]);
 	session_start();
+	// Write and close session immediately to prevent data loss
+	session_write_close();
 }
 
 class Database

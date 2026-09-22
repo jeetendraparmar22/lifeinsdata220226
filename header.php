@@ -9,6 +9,11 @@ error_reporting(0);
 // Include config first so session is started and timezone is set before anything else
 include_once(__DIR__ . '/config.php');
 
+// Re-open session since config.php closes it immediately
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Initialize Database connection
 $db = new Database();
 $conn = $db->getConnection();
