@@ -11,11 +11,6 @@ class Login
 
     public function logout()
     {
-        // Re-open session if closed
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (isset($_SESSION['utype'])) {
             $utype = $_SESSION['utype'];
             $id    = (int)($_SESSION['id'] ?? 0);
@@ -26,7 +21,7 @@ class Login
                     $this->db->query("UPDATE `subadmin` SET flag = '1' WHERE id = $id");
                 }
             }
-            $_SESSION = array();
+            unset($_SESSION);
             session_destroy();
             header("Location: index.php");
             exit;
@@ -84,17 +79,12 @@ class Login
             $currentDate >= $data['active_date'] &&
             $currentDate <= $data['deactive_date']
         ) {
-            // Re-open session since config.php closed it
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
             session_regenerate_id(true);
             $_SESSION['utype'] = $data['utype'];
             $_SESSION['adminusername'] = $data['adminusername'];
             $_SESSION['id'] = $data['id'];
             $_SESSION['timezone'] = $timezone;
             $_SESSION['timeout'] = time();
-            session_write_close();
 
             $this->redirectBasedOnDate('subadmin', $data['id'], 'add_newemp.php', 'emp_list.php');
         } else {
@@ -134,17 +124,12 @@ class Login
             $currentDate >= $data['active_date'] &&
             $currentDate <= $data['deactive_date']
         ) {
-            // Re-open session since config.php closed it
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
             session_regenerate_id(true);
             $_SESSION['utype'] = $data['utype'];
             $_SESSION['empname'] = $data['empname'];
             $_SESSION['id'] = $data['id'];
             $_SESSION['timezone'] = $timezone;
             $_SESSION['timeout'] = time();
-            session_write_close();
 
             $this->redirectBasedOnDate('employeedetail', $data['id'], 'add_entry.php', 'entrylist.php');
         } else {

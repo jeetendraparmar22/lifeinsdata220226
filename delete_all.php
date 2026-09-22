@@ -1,12 +1,6 @@
 <?php
 error_reporting(0);
 include_once("config.php");
-
-// Re-open session since config.php closes it
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $db = new Database();
 $conn = $db->getConnection();
 

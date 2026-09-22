@@ -29,11 +29,6 @@ class adminLogin
         if ($result && mysqli_num_rows($result) > 0) {
             $fetch = mysqli_fetch_array($result);
 
-            // Ensure session is started before setting
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-
             $_SESSION['adminusername'] = $fetch['adminusername'];
             $_SESSION['id'] = $fetch['adminid'];
 
@@ -55,12 +50,7 @@ class adminLogin
 // Usage example
 if (isset($_POST['login'])) {
 
-    // Include config to properly start session
     include_once(__DIR__ . '/../../config.php');
-
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
 
     $login = new adminLogin($conn);
 
