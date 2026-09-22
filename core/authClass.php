@@ -1,4 +1,6 @@
 <?php
+// Include config FIRST so custom session handler is registered before any session operations
+require_once __DIR__ . '/../config.php';
 
 class Login
 {
@@ -169,8 +171,6 @@ class Login
     }
 }
 
-// Include the updated config file and initialize the Database class
-require_once __DIR__ . '/../config.php';
 $database = new Database();
 $login = new Login($database);
 

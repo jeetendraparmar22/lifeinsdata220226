@@ -87,9 +87,17 @@ session_set_save_handler(
     array($sessionHandler, 'gc')
 );
 
-// Configure session
+// Configure session - detect HTTPS properly for production (load balancers, proxies)
 $isHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
-    || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+    || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+    || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) !== 'off')
+    || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+
+// Get the domain for cookie (use explicit domain or none for current host)
+$cookieDomain = !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+
+// Force secure in production if HTTPS is detected
+$forceSecure = $isHttps;
 
 ini_set('session.use_only_cookies', '1');
 ini_set('session.use_strict_mode', '1');
@@ -97,7 +105,8 @@ session_name('lifeins_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'secure' => $isHttps,
+    'domain' => $cookieDomain,
+    'secure' => $forceSecure,
     'httponly' => true,
     'samesite' => 'Lax'
 ]);
