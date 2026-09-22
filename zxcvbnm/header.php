@@ -1,6 +1,9 @@
 <?php
 
-
+// Clean output buffering
+while (ob_get_level()) {
+    ob_end_clean();
+}
 
 if (!isset($_SERVER['HTTP_REFERER'])) {
   // redirect them to your desired location
@@ -8,14 +11,19 @@ if (!isset($_SERVER['HTTP_REFERER'])) {
   exit;
 }
 
-
 include_once('../config.php');
+
+// Re-open session since config.php closes it
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $db = new Database();
 $conn = $db->getConnection();
 
-if (isset($_SESSION['adminusername'])) {
-} else {
+if (!isset($_SESSION['adminusername']) || empty($_SESSION['adminusername'])) {
   header("location:index.php");
+  exit;
 }
 ?>
 <!DOCTYPE html>

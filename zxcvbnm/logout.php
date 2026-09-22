@@ -1,11 +1,17 @@
 <?php
 ob_start();
 error_reporting(0);
-session_start();
+
+// Include config first - it handles session properly
+include_once('../config.php');
+
+// Re-open session since config.php closes it
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $id = (int)($_SESSION['id'] ?? 0);
 
-include_once('../config.php');
 $db = new Database();
 $conn = $db->getConnection();
 
@@ -14,7 +20,7 @@ if ($id > 0) {
     $conn->query("UPDATE `subadmin` SET flag = '1' WHERE id = $id");
 }
 
-$_SESSION['adminusername'] = "";
+$_SESSION = array();
 session_destroy();
 
 echo '<script>alert("Now you have successfully logged out of the system");window.location.href="index.php";</script>';

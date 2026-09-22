@@ -25,8 +25,6 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 		'samesite' => 'Lax'
 	]);
 	session_start();
-	// Write and close session immediately to prevent data loss
-	session_write_close();
 }
 
 class Database
